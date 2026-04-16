@@ -1,5 +1,11 @@
 # نشر تلقائي على GitHub Pages عند الدفع إلى main
-# الإعدادات → Pages → Source: GitHub Actions
+#
+# إذا فشلت خطوة "Setup Pages" برسالة Get Pages site failed / Not Found:
+# 1) Repo على GitHub → Settings → Pages
+# 2) قسم "Build and deployment" → Source: اختر "GitHub Actions" (وليس Branch)
+# 3) احفظ، ثم Actions → أعد تشغيل السير (Re-run failed jobs) أو ادفع commit جديد
+#
+# مرجع: https://docs.github.com/en/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site#publishing-with-a-custom-github-actions-workflow
 name: Deploy to GitHub Pages
 
 on:
