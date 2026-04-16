@@ -8,6 +8,10 @@
       href="https://fonts.googleapis.com/css2?family=Tajawal:wght@200;300;400;500;700;800;900&display=swap"
       rel="stylesheet" />
     <script src="https://code.iconify.design/3/3.1.0/iconify.min.js"></script>
+    <!-- رقم الواتساب: غيّر القيمة فقط (كود الدولة + الرقم بدون + أو مسافات) -->
+    <script>
+      window.__WHATSAPP_NUMBER = '966561378709';
+    </script>
     <style>
       *,
       *::before,
@@ -2491,7 +2495,8 @@
                 ><span class="iconify" data-icon="mdi:linkedin"></span
               ></a>
               <a
-                href="https://wa.me/966561378709"
+                class="js-wa-url"
+                href="#"
                 aria-label="واتساب"
                 target="_blank"
                 rel="noopener noreferrer"
@@ -2513,7 +2518,7 @@
                 <span class="iconify" data-icon="mdi:phone-outline"></span>
                 <div>
                   <small>الجوال</small>
-                  <span class="line-main" dir="ltr">+966 56 137 8709</span>
+                  <span class="line-main js-wa-phone" dir="ltr">+966 56 137 8709</span>
                 </div>
               </li>
               <li>
@@ -2578,8 +2583,8 @@
     </footer>
 
     <a
-      class="whatsapp-float"
-      href="https://wa.me/966561378709"
+      class="whatsapp-float js-wa-url"
+      href="#"
       target="_blank"
       rel="noopener noreferrer"
       aria-label="تواصل معنا على واتساب"
@@ -2593,6 +2598,58 @@
     </button>
 
     <script>
+      // ===== WhatsApp: رابط واحد + أزرار تفتح واتساب (عدا القائمة/السلايدر/للأعلى) =====
+      function waDigits() {
+        return String(window.__WHATSAPP_NUMBER || '966561378709').replace(
+          /\D/g,
+          '',
+        );
+      }
+      function waUrl() {
+        return 'https://wa.me/' + waDigits();
+      }
+      function waDisplay() {
+        const d = waDigits();
+        if (d.length === 12 && d.startsWith('966'))
+          return (
+            '+966 ' +
+            d.slice(3, 5) +
+            ' ' +
+            d.slice(5, 8) +
+            ' ' +
+            d.slice(8)
+          );
+        return d ? '+' + d : '';
+      }
+      document.querySelectorAll('a.js-wa-url').forEach((a) => {
+        a.setAttribute('href', waUrl());
+      });
+      document.querySelectorAll('.js-wa-phone').forEach((el) => {
+        const t = waDisplay();
+        if (t) el.textContent = t;
+      });
+      document.addEventListener(
+        'click',
+        function (e) {
+          const btn = e.target.closest('button');
+          if (!btn) return;
+          if (
+            btn.id === 'mobileMenuBtn' ||
+            btn.id === 'mobileNavClose' ||
+            btn.id === 'scrollTop' ||
+            btn.id === 'prevTestimonial' ||
+            btn.id === 'nextTestimonial' ||
+            btn.classList.contains('testimonial-dot')
+          ) {
+            return;
+          }
+          e.preventDefault();
+          e.stopPropagation();
+          window.open(waUrl(), '_blank', 'noopener,noreferrer');
+        },
+        true,
+      );
+
       // ===== Scroll reveal =====
       const revealObserver = new IntersectionObserver(
         (entries) => {
