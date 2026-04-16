@@ -1,11 +1,10 @@
-# نشر تلقائي على GitHub Pages عند الدفع إلى main
+# نشر الموقع على GitHub Pages عبر فرع gh-pages (بدون configure-pages — يتجنب خطأ Not Found)
 #
-# إذا فشلت خطوة "Setup Pages" برسالة Get Pages site failed / Not Found:
-# 1) Repo على GitHub → Settings → Pages
-# 2) قسم "Build and deployment" → Source: اختر "GitHub Actions" (وليس Branch)
-# 3) احفظ، ثم Actions → أعد تشغيل السير (Re-run failed jobs) أو ادفع commit جديد
+# بعد أول تشغيل ناجح لـ Actions:
+# Settings → Pages → Build and deployment → Source: Deploy from a branch
+# Branch: gh-pages   Folder: / (root)   ثم Save
 #
-# مرجع: https://docs.github.com/en/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site#publishing-with-a-custom-github-actions-workflow
+# إذا كان المصدر حالياً «GitHub Actions» غيّره إلى «Deploy from a branch» كما فوق.
 name: Deploy to GitHub Pages
 
 on:
@@ -14,9 +13,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
-  pages: write
-  id-token: write
+  contents: write
 
 concurrency:
   group: pages
@@ -24,27 +21,19 @@ concurrency:
 
 jobs:
   deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Pages
-        uses: actions/configure-pages@v4
-
-      - name: Prepare site (root files only)
+      - name: Prepare site
         run: |
           mkdir -p _site
           cp index.html logo.jpg _site/
 
-      - name: Upload site
-        uses: actions/upload-pages-artifact@v3
+      - name: Push to gh-pages branch
+        uses: peaceiris/actions-gh-pages@v4
         with:
-          path: _site
-
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: _site
+          force_orphan: true
