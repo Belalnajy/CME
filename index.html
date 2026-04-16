@@ -8,7 +8,7 @@
       href="https://fonts.googleapis.com/css2?family=Tajawal:wght@200;300;400;500;700;800;900&display=swap"
       rel="stylesheet" />
     <script src="https://code.iconify.design/3/3.1.0/iconify.min.js"></script>
-    <!-- رقم الواتساب: غيّر القيمة فقط (كود الدولة + الرقم بدون + أو مسافات) -->
+    <!-- افتراضي لو تعذّر تحميل wa-config.json — الأفضل تعديل wa-config.json من GitHub -->
     <script>
       window.__WHATSAPP_NUMBER = '966561378709';
     </script>
@@ -1294,6 +1294,36 @@
       .footer-bottom-inner a:hover {
         color: var(--teal-light);
       }
+      .footer-bottom-actions {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 8px;
+      }
+      .footer-bottom-links {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        justify-content: flex-end;
+      }
+      .footer-wa-device-btn {
+        background: transparent;
+        border: 1px solid rgb(148 163 184 / 0.35);
+        color: rgb(203 213 225 / 0.92);
+        font-size: 12px;
+        font-weight: 700;
+        padding: 6px 14px;
+        border-radius: 999px;
+        cursor: pointer;
+        font-family: 'Tajawal', sans-serif;
+        transition:
+          border-color 0.2s,
+          color 0.2s;
+      }
+      .footer-wa-device-btn:hover {
+        border-color: var(--teal-light);
+        color: white;
+      }
 
       /* ========== SCROLL TO TOP ========== */
       .scroll-top {
@@ -2571,12 +2601,17 @@
       <div class="footer-bottom-strip">
         <div class="footer-bottom-inner">
           <span>© 2026 منصة اعتماد طبي. جميع الحقوق محفوظة.</span>
-          <span>
-            <a href="#">سياسة الخصوصية</a>
-            ·
-            <a href="#">الشروط</a>
-            ·
-            <a href="#">خريطة الموقع</a>
+          <span class="footer-bottom-actions">
+            <button type="button" id="waLocalSaveBtn" class="footer-wa-device-btn">
+              رقم واتساب لهذا الجهاز فقط
+            </button>
+            <span class="footer-bottom-links">
+              <a href="#">سياسة الخصوصية</a>
+              ·
+              <a href="#">الشروط</a>
+              ·
+              <a href="#">خريطة الموقع</a>
+            </span>
           </span>
         </div>
       </div>
@@ -2598,7 +2633,9 @@
     </button>
 
     <script>
-      // ===== WhatsApp: رابط واحد + أزرار تفتح واتساب (عدا القائمة/السلايدر/للأعلى) =====
+      // ===== WhatsApp: wa-config.json (كل الزوار) أو localStorage (جهازك فقط) =====
+      const WA_LS_KEY = 'wa_override_digits';
+
       function waDigits() {
         return String(window.__WHATSAPP_NUMBER || '966561378709').replace(
           /\D/g,
@@ -2621,34 +2658,85 @@
           );
         return d ? '+' + d : '';
       }
-      document.querySelectorAll('a.js-wa-url').forEach((a) => {
-        a.setAttribute('href', waUrl());
-      });
-      document.querySelectorAll('.js-wa-phone').forEach((el) => {
-        const t = waDisplay();
-        if (t) el.textContent = t;
-      });
-      document.addEventListener(
-        'click',
-        function (e) {
-          const btn = e.target.closest('button');
-          if (!btn) return;
-          if (
-            btn.id === 'mobileMenuBtn' ||
-            btn.id === 'mobileNavClose' ||
-            btn.id === 'scrollTop' ||
-            btn.id === 'prevTestimonial' ||
-            btn.id === 'nextTestimonial' ||
-            btn.classList.contains('testimonial-dot')
-          ) {
-            return;
+      async function waLoadFromSources() {
+        const fromLs = localStorage.getItem(WA_LS_KEY);
+        if (fromLs && fromLs.replace(/\D/g, '').length >= 9) {
+          window.__WHATSAPP_NUMBER = fromLs.replace(/\D/g, '');
+          return;
+        }
+        try {
+          const r = await fetch(
+            new URL('wa-config.json', document.baseURI || location.href),
+            { cache: 'no-store' },
+          );
+          if (r.ok) {
+            const j = await r.json();
+            if (j.whatsapp)
+              window.__WHATSAPP_NUMBER = String(j.whatsapp).replace(/\D/g, '');
           }
-          e.preventDefault();
-          e.stopPropagation();
-          window.open(waUrl(), '_blank', 'noopener,noreferrer');
-        },
-        true,
-      );
+        } catch (_) {}
+      }
+      function waApplyUi() {
+        document.querySelectorAll('a.js-wa-url').forEach((a) => {
+          a.setAttribute('href', waUrl());
+        });
+        document.querySelectorAll('.js-wa-phone').forEach((el) => {
+          const t = waDisplay();
+          if (t) el.textContent = t;
+        });
+      }
+      let waButtonListenerAttached = false;
+      function waAttachButtonClicks() {
+        if (waButtonListenerAttached) return;
+        waButtonListenerAttached = true;
+        document.addEventListener(
+          'click',
+          function (e) {
+            const btn = e.target.closest('button');
+            if (!btn) return;
+            if (
+              btn.id === 'mobileMenuBtn' ||
+              btn.id === 'mobileNavClose' ||
+              btn.id === 'scrollTop' ||
+              btn.id === 'prevTestimonial' ||
+              btn.id === 'nextTestimonial' ||
+              btn.id === 'waLocalSaveBtn' ||
+              btn.classList.contains('testimonial-dot')
+            ) {
+              return;
+            }
+            e.preventDefault();
+            e.stopPropagation();
+            window.open(waUrl(), '_blank', 'noopener,noreferrer');
+          },
+          true,
+        );
+      }
+      (async function waBootstrap() {
+        await waLoadFromSources();
+        waApplyUi();
+        waAttachButtonClicks();
+      })();
+
+      document
+        .getElementById('waLocalSaveBtn')
+        ?.addEventListener('click', async () => {
+          const cur = waDigits();
+          const msg =
+            'أدخل الرقم بصيغة 9665xxxxxxxx (بدون +). اتركه فارغاً ثم OK لمسح الرقم المحفوظ على هذا الجهاز فقط.';
+          const v = window.prompt(msg, cur);
+          if (v === null) return;
+          const d = String(v).replace(/\D/g, '');
+          if (!d) {
+            localStorage.removeItem(WA_LS_KEY);
+            window.__WHATSAPP_NUMBER = '966561378709';
+            await waLoadFromSources();
+          } else {
+            localStorage.setItem(WA_LS_KEY, d);
+            window.__WHATSAPP_NUMBER = d;
+          }
+          waApplyUi();
+        });
 
       // ===== Scroll reveal =====
       const revealObserver = new IntersectionObserver(
